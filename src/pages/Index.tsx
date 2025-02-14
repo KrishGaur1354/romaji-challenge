@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { GameCard } from "@/components/GameCard";
 import { ScoreBoard } from "@/components/ScoreBoard";
 import { Toaster, toast } from "sonner";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Sun, Moon } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -104,6 +104,35 @@ const getRankMessage = (score: number, total: number) => {
   return "Beginner! Don't give up! 🌱";
 };
 
+function TypewriterHeader() {
+  const texts = ["ひらがなチャレンジ", "Hiragana Challenge"];
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % texts.length);
+    }, 4000); // Change every 4 seconds
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div style={{ height: "3.5rem" }}>
+      <AnimatePresence mode="wait">
+        <motion.h1
+          key={current}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 1 }}
+          className="text-5xl font-bold font-japanese text-foreground mb-4"
+        >
+          {texts[current]}
+        </motion.h1>
+      </AnimatePresence>
+    </div>
+  );
+}
+
 const Index = () => {
   const { theme, setTheme } = useTheme();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -118,10 +147,10 @@ const Index = () => {
 
   // Re-shuffle on first render
   useEffect(() => {
-    const random25 = [...hiraganaData]
+    const random15 = [...hiraganaData]
       .sort(() => Math.random() - 0.5)
-      .slice(0, 17);
-    setShuffledData(random25);
+      .slice(0, 15);
+    setShuffledData(random15);
   }, []);
 
   const handleGameOver = () => {
@@ -140,7 +169,7 @@ const Index = () => {
     setIsGameOver(false);
     const random25 = [...hiraganaData]
       .sort(() => Math.random() - 0.5)
-      .slice(0, 25);
+      .slice(0, 15);
     setShuffledData(random25);
   };
 
@@ -192,16 +221,14 @@ const Index = () => {
       <Toaster position="top-center" />
       {/* Main content */}
       <div className="flex-grow flex flex-col items-center justify-center">
-        {/* Header */}
+        {/* Header with typewriter effect */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="text-center mb-12"
         >
-          <h1 className="text-5xl font-bold font-japanese text-foreground mb-4 animate-fade-in">
-            ひらがなチャレンジ
-          </h1>
+          <TypewriterHeader />
           <p className="text-lg text-muted-foreground">
             Master Japanese characters with elegance
           </p>
