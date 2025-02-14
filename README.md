@@ -100,5 +100,5 @@ vercel deploy
 5. Open a Pull Request
 
 ## 📜 License
-This project is licensed under the **MIT License**.
+This project is licensed under the [MIT License](https://github.com/KrishGaur1354/romaji-challenge/blob/main/LICENSE).
 
