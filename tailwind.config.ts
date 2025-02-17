@@ -53,6 +53,7 @@ export default {
       fontFamily: {
         sans: ["Inter", "sans-serif"],
         japanese: ["Noto Sans JP", "sans-serif"],
+        noto: ["Noto Sans JP", "serif"],
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(circle at center, var(--tw-gradient-stops))',
