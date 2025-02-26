@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { GameCard } from "@/components/GameCard";
 import { ScoreBoard } from "@/components/ScoreBoard";
+import DrawingCanvas from "@/components/DrawingCanvas.tsx";
 import { Toaster, toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, Edit, Languages } from "lucide-react";
 import { useTheme } from "next-themes";
 import { hiraganaData, katakanaData } from "../data/characters";
 
@@ -50,6 +51,7 @@ const Typewriter = ({ text }: { text: string }) => {
 const Index = () => {
   const { theme, setTheme } = useTheme();
   const [challengeMode, setChallengeMode] = useState<"hiragana" | "katakana">("hiragana");
+  const [gameMode, setGameMode] = useState<"recognition" | "drawing">("recognition");
   const [headerDisplayIndex, setHeaderDisplayIndex] = useState(0);
   const dataset = challengeMode === "hiragana" ? hiraganaData : katakanaData;
   
@@ -138,82 +140,127 @@ const Index = () => {
       ? ["ひらがなチャレンジ", "Hiragana Challenge"]
       : ["カタカナチャレンジ", "Katakana Challenge"];
   
-      return (
-        <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-background to-background/80 p-4 sm:p-6 md:p-8 max-w-lg mx-auto relative">
-          <div className="fixed inset-0 bg-japanese-pattern opacity-10 pointer-events-none" />
-          <div className="absolute top-2 right-0 mr-4">
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="p-2 rounded-full bg-card hover:bg-accent/10 transition-colors"
+  return (
+    <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-background to-background/80 p-4 sm:p-6 md:p-8 max-w-lg mx-auto relative">
+      <div className="fixed inset-0 bg-japanese-pattern opacity-10 pointer-events-none" />
+      <div className="absolute top-2 right-0 mr-4">
+        <button
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className="p-2 rounded-full bg-card hover:bg-accent/10 transition-colors"
+        >
+          {theme === "dark" ? (
+            <Sun className="w-6 h-6" />
+          ) : (
+            <Moon className="w-6 h-6" />
+          )}
+        </button>
+      </div>
+      <div className="flex-grow flex flex-col items-center justify-center">
+        <div className="text-center mb-8" style={{ minHeight: "6rem" }}>
+          <AnimatePresence mode='wait'>
+            <motion.h1
+              key={challengeMode + headerDisplayIndex}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="text-5xl font-bold font-japanese text-foreground mb-2"
             >
-              {theme === "dark" ? (
-                <Sun className="w-6 h-6" />
-              ) : (
-                <Moon className="w-6 h-6" />
-              )}
-            </button>
-          </div>
-          <div className="flex-grow flex flex-col items-center justify-center">
-          <div className="text-center mb-8" style={{ minHeight: "6rem" }}>
-  <AnimatePresence mode='wait'>
-    <motion.h1
-      key={challengeMode + headerDisplayIndex}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3 }}
-      className="text-5xl font-bold font-japanese text-foreground mb-2"
-      // style={{ flexShrink: 1, whiteSpace: "nowrap" }}
-    >
-      {getHeaderText()}
-    </motion.h1>
-  </AnimatePresence>
-  <motion.p
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    className="mt-2 text-lg text-muted-foreground"
-  >
-    Master Japanese characters with elegance
-  </motion.p>
-</div>
+              {getHeaderText()}
+            </motion.h1>
+          </AnimatePresence>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mt-2 text-lg text-muted-foreground"
+          >
+            Master Japanese characters with elegance
+          </motion.p>
+        </div>
 
-<motion.div className="flex justify-center gap-4 mb-8">
-  <motion.button
-    whileHover={{ scale: 1.05 }}
-    whileTap={{ scale: 0.95 }}
-    onClick={() => setChallengeMode("hiragana")}
-    className={`px-6 py-2 rounded-full transition-colors ${
-      challengeMode === "hiragana"
-        ? "bg-accent text-accent-foreground shadow-lg"
-        : "bg-card hover:bg-accent/10"
-    }`}
-  >
-    Hiragana
-  </motion.button>
-  <motion.button
-    whileHover={{ scale: 1.05 }}
-    whileTap={{ scale: 0.95 }}
-    onClick={() => setChallengeMode("katakana")}
-    className={`px-6 py-2 rounded-full transition-colors ${
-      challengeMode === "katakana"
-        ? "bg-accent text-accent-foreground shadow-lg"
-        : "bg-card hover:bg-accent/10"
-    }`}
-  >
-    Katakana
-  </motion.button>
-</motion.div>
+        <motion.div className="flex justify-center gap-4 mb-4">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setChallengeMode("hiragana")}
+            className={`px-6 py-2 rounded-full transition-colors ${
+              challengeMode === "hiragana"
+                ? "bg-accent text-accent-foreground shadow-lg"
+                : "bg-card hover:bg-accent/10"
+            }`}
+          >
+            Hiragana
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setChallengeMode("katakana")}
+            className={`px-6 py-2 rounded-full transition-colors ${
+              challengeMode === "katakana"
+                ? "bg-accent text-accent-foreground shadow-lg"
+                : "bg-card hover:bg-accent/10"
+            }`}
+          >
+            Katakana
+          </motion.button>
+        </motion.div>
+
+        <motion.div className="flex justify-center gap-4 mb-8">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setGameMode("recognition")}
+            className={`px-6 py-2 rounded-full transition-colors flex items-center gap-2 ${
+              gameMode === "recognition"
+                ? "bg-accent text-accent-foreground shadow-lg"
+                : "bg-card hover:bg-accent/10"
+            }`}
+          >
+            <Languages className="w-4 h-4" />
+            Recognition
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setGameMode("drawing")}
+            className={`px-6 py-2 rounded-full transition-colors flex items-center gap-2 ${
+              gameMode === "drawing"
+                ? "bg-accent text-accent-foreground shadow-lg"
+                : "bg-card hover:bg-accent/10"
+            }`}
+          >
+            <Edit className="w-4 h-4" />
+            Drawing
+          </motion.button>
+        </motion.div>
 
         <Toaster position="top-center" />
         <ScoreBoard score={score} total={shuffledData.length} chances={chances} />
         {!isGameOver ? (
           <>
-            <GameCard
-              character={shuffledData[currentIndex].character}
-              romaji={shuffledData[currentIndex].romaji}
-              onCorrect={handleCorrect}
-              onIncorrect={handleIncorrect}
-            />
+            {gameMode === "recognition" ? (
+              // Original game mode - recognize characters
+              <GameCard
+                character={shuffledData[currentIndex].character}
+                romaji={shuffledData[currentIndex].romaji}
+                onCorrect={handleCorrect}
+                onIncorrect={handleIncorrect}
+              />
+            ) : (
+              // New drawing mode - draw characters based on romaji
+              <div className="text-center mb-4">
+                <p className="text-2xl font-bold mb-2">Draw: {shuffledData[currentIndex].romaji}</p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Draw the {challengeMode} character for "{shuffledData[currentIndex].romaji}"
+                </p>
+                <DrawingCanvas 
+                  expectedCharacter={shuffledData[currentIndex].character}
+                  onCorrect={handleCorrect}
+                  onIncorrect={handleIncorrect}
+                />
+              </div>
+            )}
+            
             <motion.button
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -224,13 +271,22 @@ const Index = () => {
               Need a hint?
             </motion.button>
             {showTip && (
-              <motion.p
+              <motion.div
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-2 text-sm text-accent italic"
+                className="mt-2 text-sm text-accent italic text-center"
               >
-                {shuffledData[currentIndex].tip}
-              </motion.p>
+                {gameMode === "recognition" ? (
+                  <p>{shuffledData[currentIndex].tip}</p>
+                ) : (
+                  <div className="flex flex-col items-center">
+                    <p className="mb-2">{shuffledData[currentIndex].tip}</p>
+                    <p className="text-xl font-japanese">
+                      {shuffledData[currentIndex].character}
+                    </p>
+                  </div>
+                )}
+              </motion.div>
             )}
           </>
         ) : (
@@ -256,7 +312,9 @@ const Index = () => {
           transition={{ delay: 0.5 }}
           className="mt-12 text-sm text-muted-foreground animate-fade-in max-w-md text-center"
         >
-          Type the romaji (roman letters) for the character shown above
+          {gameMode === "recognition" 
+            ? "Type the romaji (roman letters) for the character shown above"
+            : "Draw the character that matches the romaji shown above"}
         </motion.p>
       </div>
       <footer className="mt-8 text-center text-xs sm:text-sm text-muted-foreground">
