@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { GameCard } from "@/components/GameCard";
 import { ScoreBoard } from "@/components/ScoreBoard";
 import DrawingCanvas from "@/components/DrawingCanvas.tsx";
+import { Handbook } from "@/components/Handbook"; // Import the Handbook component
 import { Toaster, toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sun, Moon, Edit, Languages } from "lucide-react";
@@ -328,6 +329,9 @@ const Index = () => {
           Krish Gaur
         </a>
       </footer>
+      
+      {/* Add the Handbook component */}
+      <Handbook />
     </div>
   );
 };
