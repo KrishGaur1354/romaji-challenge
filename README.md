@@ -1,104 +1,140 @@
-# Romanji Challenge
+# Romaji Challenge
 
 [![Vercel Deployment](https://vercel.com/button)](https://romanjichallenge.vercel.app/)
 
-A modern web application designed to help users practice and test their knowledge of Romaji through interactive challenges.
+An elegant web application designed to help users master Japanese characters through interactive challenges and intuitive drawing recognition.
 
-## 🚀 Live Demo
-**Check it out here:** [Romanji Challenge](https://romanjichallenge.vercel.app/)
+## ✨ Features
+
+### Core Features
+- 🎮 Interactive character recognition game
+- ✍️ Intuitive drawing interface with real-time feedback
+- 🎯 Pattern-based stroke recognition system
+- 🔄 Seamless switching between Hiragana and Katakana
+- 📊 Dynamic scoreboard for progress tracking
+- 💫 Beautiful animations and visual feedback
+- 🌓 Light/Dark mode support
+
+### Technical Features
+- 📱 Responsive design (mobile-friendly)
+- ⚡ Optimized performance with Vite
+- 🎨 Modern UI with Tailwind CSS
+- 🔔 Elegant notifications with Sonner
+- 🎭 Smooth animations with Framer Motion
+
+## 🎯 How It Works
+
+### Character Recognition
+The app uses a sophisticated pattern-based recognition system that:
+1. Tracks each stroke's direction and position
+2. Analyzes stroke patterns in real-time
+3. Provides instant visual feedback
+4. Matches patterns against known character forms
+
+### Drawing Interface
+- Smooth, responsive drawing surface
+- Real-time stroke analysis
+- Visual feedback for each stroke
+- Clear and intuitive controls
+
+## 🛠️ Tech Stack
+- **Framework:** React (TypeScript)
+- **Build Tool:** Vite
+- **Styling:** Tailwind CSS
+- **Animations:** Framer Motion
+- **State Management:** React Query
+- **Notifications:** Sonner
+- **Hosting:** Vercel
 
 ## 📂 Project Structure
 ```
 src/
  ├── components/            # Reusable UI components
- │   ├── ui/                # UI elements (GameCard, ScoreBoard, etc.)
- │   ├── GameCard.tsx       # Displays game details
- │   ├── ScoreBoard.tsx     # Leaderboard component
+ │   ├── DrawingCanvas.tsx  # Drawing interface
+ │   ├── GameCard.tsx       # Game interface
+ │   ├── ScoreBoard.tsx     # Progress tracking
+ │   ├── StrokeAnimation.tsx # Stroke animations
+ │   └── ui/               # UI elements
  │
- ├── hooks/                 # Custom hooks
- │   ├── use-mobile.tsx     # Hook for mobile responsiveness
- │   ├── use-toast.ts       # Hook for notifications
+ ├── services/             # Core services
+ │   └── simpleRecognitionService.ts  # Pattern recognition
  │
- ├── lib/                   # Utility functions
- │   ├── utils.ts           # General utility functions
+ ├── types/                # TypeScript types
+ │   └── drawing.ts        # Drawing types
  │
- ├── pages/                 # Page components
- │   ├── Index.tsx          # Main game interface
- │   ├── NotFound.tsx       # 404 Page
+ ├── pages/               # Page components
+ │   └── Index.tsx        # Main game interface
  │
- ├── App.tsx                # Root component
- ├── main.tsx               # Application entry point
- ├── index.css              # Global styles
- ├── App.css                # Component styles
-
-config/
- ├── tailwind.config.ts      # Tailwind CSS configuration
- ├── vite.config.ts          # Vite configuration
- ├── tsconfig.json           # TypeScript configuration
-
-other/
- ├── package.json            # Project dependencies
- ├── postcss.config.js       # PostCSS configuration
- ├── eslint.config.js        # Linting rules
- ├── README.md               # Project documentation
+ └── styles/              # Global styles
 ```
 
-## 🛠️ Tech Stack
-- **Frontend:** React (TypeScript), Vite
-- **State Management:** React Query (@tanstack/react-query)
-- **UI Framework:** Tailwind CSS
-- **Routing:** React Router
-- **Notifications:** Sonner
-- **Hosting:** Vercel
+## 💻 Getting Started
 
-## 💻 Installation & Setup
 ### Prerequisites
-- [Node.js](https://nodejs.org/) (or [Bun](https://bun.sh/))
+- [Node.js](https://nodejs.org/) (v14 or newer)
 - [Git](https://git-scm.com/)
 
-### Clone the Repository
+### Installation
+
+1. Clone the repository:
 ```sh
-git clone https://github.com/yourusername/romanjichallenge.git
-cd romanjichallenge
+git clone https://github.com/KrishGaur1354/romaji-challenge.git
+cd romaji-challenge
 ```
 
-### Install Dependencies
-Using npm:
+2. Install dependencies:
 ```sh
 npm install
-```
-Using Bun:
-```sh
-bun install
+# or
+yarn install
+# or
+pnpm install
 ```
 
-### Run the Development Server
+3. Start the development server:
 ```sh
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
 ```
-This starts the app on `http://localhost:5173/` (default Vite port).
+
+The app will be available at `http://localhost:5173/`
 
 ## 🚀 Deployment
-The app is already deployed on **Vercel**. To deploy manually:
-```sh
-vercel deploy
-```
 
-## 🛠️ Features
-✅ Interactive Romaji learning game  
-✅ Scoreboard for tracking progress  
-✅ Responsive design (mobile-friendly)  
-✅ Optimized performance using Vite  
-✅ Custom hooks for modularity  
-✅ Toast notifications with Sonner  
+The app is deployed on Vercel. To deploy your own instance:
+
+1. Fork this repository
+2. Import to Vercel
+3. Deploy!
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FKrishGaur1354%2Fromaji-challenge)
 
 ## 🤝 Contributing
+
+Contributions are welcome! Here's how you can help:
+
 1. Fork the repository
-2. Create a new branch (`git checkout -b feature-branch`)
-3. Commit your changes (`git commit -m "Add new feature"`)
-4. Push the branch (`git push origin feature-branch`)
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
 5. Open a Pull Request
 
-## 📜 License
-This project is licensed under the [MIT License](https://github.com/KrishGaur1354/romaji-challenge/blob/main/LICENSE).
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Thanks to all contributors who have helped shape this project
+- Inspired by traditional Japanese calligraphy practice
+- Built with modern web technologies and love for learning
+
+## 🔗 Links
+
+- [Live Demo](https://romanjichallenge.vercel.app/)
+- [GitHub Repository](https://github.com/KrishGaur1354/romaji-challenge)
+- [Report an Issue](https://github.com/KrishGaur1354/romaji-challenge/issues)
 
