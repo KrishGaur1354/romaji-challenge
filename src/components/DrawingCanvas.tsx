@@ -1,6 +1,8 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import * as tf from '@tensorflow/tfjs';
+import { simpleRecognitionService } from '@/services/simpleRecognitionService';
+import StrokeAnimation from './StrokeAnimation';
+import type { Point, Stroke } from '@/types/drawing';
 
 // Character mapping between model output indices and actual characters
 // This would be loaded from your processed character_map.json
@@ -25,87 +27,63 @@ const REVERSE_CHARACTER_MAP = Object.entries(CHARACTER_MAP).reduce(
   {}
 );
 
-const DrawingCanvas = ({ 
-  expectedCharacter, 
-  onCorrect, 
-  onIncorrect, 
+interface DrawingCanvasProps {
+  expectedCharacter: string;
+  onCorrect: () => void;
+  onIncorrect: () => void;
+  size?: number;
+  lineColor?: string;
+  lineWidth?: number;
+}
+
+const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
+  expectedCharacter,
+  onCorrect,
+  onIncorrect,
   size = 300,
   lineColor = '#6366f1',
   lineWidth = 5
 }) => {
-  const canvasRef = useRef(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [imageData, setImageData] = useState(null);
   const [isPredicting, setIsPredicting] = useState(false);
-  const [lastPosition, setLastPosition] = useState({ x: 0, y: 0 });
-  const [model, setModel] = useState(null);
-  const [modelLoading, setModelLoading] = useState(false);
-  const [modelError, setModelError] = useState(null);
-  const [prediction, setPrediction] = useState(null);
-  const [confidenceThreshold] = useState(0.5); // Minimum confidence to accept a prediction
-  
-  // Load the model on component mount
-  useEffect(() => {
-    async function loadModel() {
-      setModelLoading(true);
-      setModelError(null);
-      
-      try {
-        // Load the model from the public directory
-        const loadedModel = await tf.loadLayersModel('/models/japanese_character_model/model.json');
-        setModel(loadedModel);
-        console.log('Japanese character recognition model loaded successfully');
-      } catch (error) {
-        console.error('Failed to load model:', error);
-        setModelError('Could not load the character recognition model. Falling back to simulated predictions.');
-      } finally {
-        setModelLoading(false);
-      }
-    }
-    
-    loadModel();
-    
-    // Clean up function
-    return () => {
-      // Dispose of any tensors when component unmounts
-      if (model) {
-        model.dispose();
-      }
-    };
-  }, []);
-  
-  // Set up canvas on component mount
+  const [currentStroke, setCurrentStroke] = useState<Point[]>([]);
+  const [prediction, setPrediction] = useState<any>(null);
+  const [showAnimation, setShowAnimation] = useState(false);
+
+  // Set up canvas and recognition service on component mount
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
+
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
     ctx.lineWidth = lineWidth;
     ctx.strokeStyle = lineColor;
+
+    // Initialize recognition service with canvas size
+    simpleRecognitionService.setCanvasSize(canvas.width, canvas.height);
   }, [lineWidth, lineColor]);
-  
-  // Clear canvas function
-  const clearCanvas = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    setPrediction(null);
-  };
-  
+
   // Drawing functions
-  const startDrawing = (e) => {
-    e.preventDefault(); // Prevent scrolling on touch devices
+  const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
     
     const canvas = canvasRef.current;
+    if (!canvas) return;
+
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
     const rect = canvas.getBoundingClientRect();
     
-    // Handle both mouse and touch events
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
     
     const x = clientX - rect.left;
     const y = clientY - rect.top;
@@ -114,20 +92,23 @@ const DrawingCanvas = ({
     ctx.moveTo(x, y);
     
     setIsDrawing(true);
-    setLastPosition({ x, y });
+    setCurrentStroke([{ x, y }]);
   };
-  
-  const draw = (e) => {
+
+  const draw = (e: React.MouseEvent | React.TouchEvent) => {
     if (!isDrawing) return;
-    e.preventDefault(); // Prevent scrolling on touch devices
+    e.preventDefault();
     
     const canvas = canvasRef.current;
+    if (!canvas) return;
+
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
     const rect = canvas.getBoundingClientRect();
     
-    // Handle both mouse and touch events
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
     
     const x = clientX - rect.left;
     const y = clientY - rect.top;
@@ -135,203 +116,83 @@ const DrawingCanvas = ({
     ctx.lineTo(x, y);
     ctx.stroke();
     
-    setLastPosition({ x, y });
+    setCurrentStroke(prev => [...prev, { x, y }]);
   };
-  
+
   const stopDrawing = () => {
-    if (isDrawing) {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
-      ctx.closePath();
-      setIsDrawing(false);
-      
-      // Prepare image data for model prediction
-      const imageData = canvas.toDataURL('image/png');
-      setImageData(imageData);
+    if (isDrawing && currentStroke.length > 0) {
+      simpleRecognitionService.addStroke(currentStroke);
+      setCurrentStroke([]);
     }
+    setIsDrawing(false);
   };
-  
-  // Preprocess the canvas for the model
-  const preprocessCanvas = async () => {
-    const canvas = canvasRef.current;
-    
-    return tf.tidy(() => {
-      // Convert the canvas to a tensor
-      let img = tf.browser.fromPixels(canvas, 1); // Grayscale (1 channel)
-      
-      // Resize to match the model's expected input shape
-      img = img.resizeBilinear([64, 64]);
-      
-      // Normalize to [0,1]
-      img = img.div(255.0);
-      
-      // Add batch dimension
-      img = img.expandDims(0);
-      
-      return img;
-    });
-  };
-  
-  // Function to handle prediction with TensorFlow.js
+
   const handlePredict = async () => {
-    if (!imageData) {
-      alert("Please draw a character first");
-      return;
-    }
-    
     setIsPredicting(true);
-    
+    setPrediction(null);
+    setShowAnimation(false);
+
     try {
-      if (model) {
-        // Use the trained model for prediction
-        const inputTensor = await preprocessCanvas();
-        const predictions = await model.predict(inputTensor);
-        
-        // Get the raw prediction data
-        const predictionArray = await predictions.data();
-        
-        // Find the index with the highest probability
-        let maxIndex = 0;
-        let maxProbability = predictionArray[0];
-        
-        for (let i = 1; i < predictionArray.length; i++) {
-          if (predictionArray[i] > maxProbability) {
-            maxProbability = predictionArray[i];
-            maxIndex = i;
-          }
-        }
-        
-        // Get the corresponding character
-        const predictedCharacter = CHARACTER_MAP[maxIndex] || '?';
-        
-        // Create prediction object
-        const predictionResult = {
-          character: predictedCharacter,
-          probability: maxProbability,
-          expectedIndex: REVERSE_CHARACTER_MAP[expectedCharacter] || -1
-        };
-        
-        setPrediction(predictionResult);
-        
-        // Check if prediction matches expected character
-        const isCorrect = (
-          predictedCharacter === expectedCharacter && 
-          maxProbability >= confidenceThreshold
-        );
-        
-        if (isCorrect) {
-          onCorrect();
-        } else {
-          onIncorrect();
-        }
-        
-        // Clean up
-        inputTensor.dispose();
-        predictions.dispose();
+      const result = simpleRecognitionService.recognizeCharacter(expectedCharacter);
+      setPrediction(result);
+      setShowAnimation(true);
+      
+      if (result.probability >= 0.7) {
+        onCorrect();
       } else {
-        // Fallback if model isn't loaded
-        fallbackPrediction();
+        onIncorrect();
       }
     } catch (error) {
-      console.error("Prediction error:", error);
-      fallbackPrediction();
+      console.error('Prediction error:', error);
     } finally {
       setIsPredicting(false);
     }
   };
-  
-  // Fallback function if model is not available
-  const fallbackPrediction = () => {
-    // Mock prediction logic - in real app, improve this with more sophisticated rules
-    // For demo purposes, we'll use a more predictable fallback
-    
-    // If user has tried to draw a character, give them a fair chance
+
+  const clearCanvas = () => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
+
     const ctx = canvas.getContext('2d');
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const pixels = imageData.data;
-    
-    // Count non-white pixels to see if user has drawn something substantial
-    let nonWhitePixels = 0;
-    for (let i = 0; i < pixels.length; i += 4) {
-      // If pixel is not white (checking RGB values)
-      if (pixels[i] < 245 || pixels[i+1] < 245 || pixels[i+2] < 245) {
-        nonWhitePixels++;
-      }
-    }
-    
-    // If they've drawn something substantial, give a 70% chance of being correct
-    const hasDrawnSomething = nonWhitePixels > (canvas.width * canvas.height * 0.05);
-    const randomSuccess = Math.random() < (hasDrawnSomething ? 0.7 : 0.3);
-    
-    if (randomSuccess) {
-      setPrediction({
-        character: expectedCharacter,
-        probability: 0.8 + (Math.random() * 0.2), // Random high probability
-        expectedIndex: REVERSE_CHARACTER_MAP[expectedCharacter] || -1
-      });
-      onCorrect();
-    } else {
-      // Generate an incorrect prediction - pick a similar character if possible
-      let incorrectChar;
-      
-      // Try to find a similar character for a more realistic incorrect prediction
-      const similarChars = getSimilarCharacters(expectedCharacter);
-      if (similarChars.length > 0) {
-        incorrectChar = similarChars[Math.floor(Math.random() * similarChars.length)];
-      } else {
-        // If no similar characters defined, pick a random different character
-        const allChars = Object.values(CHARACTER_MAP);
-        do {
-          incorrectChar = allChars[Math.floor(Math.random() * allChars.length)];
-        } while (incorrectChar === expectedCharacter);
-      }
-      
-      setPrediction({
-        character: incorrectChar,
-        probability: 0.4 + (Math.random() * 0.4), // Random medium probability
-        expectedIndex: REVERSE_CHARACTER_MAP[expectedCharacter] || -1
-      });
-      onIncorrect();
-    }
+    if (!ctx) return;
+
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    setPrediction(null);
+    setShowAnimation(false);
+    simpleRecognitionService.clearStrokes();
   };
-  
-  // Helper function to get visually similar characters
-  // This helps make incorrect predictions more realistic
-  const getSimilarCharacters = (char) => {
-    // Map of characters that look similar (simplified example)
-    const similarityMap = {
-      'あ': ['お', 'め'],
-      'い': ['り', 'け'],
-      'う': ['つ', 'ウ'],
-      'さ': ['き', 'ち'],
-      'ア': ['ァ', 'マ'],
-      'カ': ['力', 'ガ'],
-      // Add more mappings as needed
-    };
-    
-    return similarityMap[char] || [];
-  };
-  
+
   return (
     <motion.div 
       className="flex flex-col items-center" 
       initial={{ opacity: 0 }} 
       animate={{ opacity: 1 }}
     >
-      <canvas 
-        ref={canvasRef}
-        width={size}
-        height={size}
-        className="border-2 border-accent rounded-lg shadow-lg bg-white touch-none"
-        onMouseDown={startDrawing}
-        onMouseMove={draw}
-        onMouseUp={stopDrawing}
-        onMouseLeave={stopDrawing}
-        onTouchStart={startDrawing}
-        onTouchMove={draw}
-        onTouchEnd={stopDrawing}
-      />
+      <div className="relative">
+        <canvas 
+          ref={canvasRef}
+          width={size}
+          height={size}
+          className="border-2 border-accent rounded-lg shadow-lg bg-white touch-none"
+          onMouseDown={startDrawing}
+          onMouseMove={draw}
+          onMouseUp={stopDrawing}
+          onMouseLeave={stopDrawing}
+          onTouchStart={startDrawing}
+          onTouchMove={draw}
+          onTouchEnd={stopDrawing}
+        />
+        {showAnimation && prediction && (
+          <div className="absolute top-0 left-0">
+            <StrokeAnimation
+              animationData={prediction.animationData}
+              width={size}
+              height={size}
+            />
+          </div>
+        )}
+      </div>
       
       {/* Prediction results */}
       {prediction && (
@@ -342,28 +203,14 @@ const DrawingCanvas = ({
           transition={{ duration: 0.3 }}
         >
           <p className="text-sm">
-            Recognized as: <span className="font-bold text-lg">{prediction.character}</span>
-            <span className="text-xs ml-1">({(prediction.probability * 100).toFixed(0)}%)</span>
+            Match accuracy: <span className="font-bold">{(prediction.probability * 100).toFixed(0)}%</span>
           </p>
-          {prediction.character !== expectedCharacter && (
+          {prediction.probability < 0.7 && (
             <p className="text-xs text-muted-foreground mt-1">
-              Expected: <span className="font-medium">{expectedCharacter}</span>
+              Try to match the stroke pattern of <span className="font-medium">{expectedCharacter}</span>
             </p>
           )}
         </motion.div>
-      )}
-      
-      {/* Model status indicators */}
-      {modelLoading && (
-        <div className="mt-2 text-sm text-accent animate-pulse">
-          <p>Loading AI recognition model...</p>
-        </div>
-      )}
-      
-      {modelError && (
-        <div className="mt-2 text-xs text-muted-foreground">
-          <p>{modelError}</p>
-        </div>
       )}
       
       <div className="flex gap-4 mt-4">
