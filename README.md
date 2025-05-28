@@ -49,23 +49,35 @@ The app uses a sophisticated pattern-based recognition system that:
 ## 📂 Project Structure
 ```
 src/
- ├── components/            # Reusable UI components
- │   ├── DrawingCanvas.tsx  # Drawing interface
- │   ├── GameCard.tsx       # Game interface
- │   ├── ScoreBoard.tsx     # Progress tracking
- │   ├── StrokeAnimation.tsx # Stroke animations
- │   └── ui/               # UI elements
- │
- ├── services/             # Core services
- │   └── simpleRecognitionService.ts  # Pattern recognition
- │
- ├── types/                # TypeScript types
- │   └── drawing.ts        # Drawing types
- │
- ├── pages/               # Page components
- │   └── Index.tsx        # Main game interface
- │
- └── styles/              # Global styles
+├── App.css
+├── App.tsx
+├── index.css
+├── main.tsx
+├── vite-env.d.ts
+├── components/
+│   ├── DrawingCanvas.tsx
+│   ├── GameCard.tsx
+│   ├── Handbook.tsx
+│   ├── NetworkVisualization.tsx
+│   ├── SakuraPetals.tsx
+│   ├── ScoreBoard.tsx
+│   ├── StrokeAnimation.tsx
+│   └── ui/                
+├── data/
+│   └── characters.ts
+├── hooks/
+│   ├── use-mobile.tsx
+│   └── use-toast.ts
+├── lib/
+│   └── utils.ts
+├── pages/
+│   ├── Index.tsx
+│   └── NotFound.tsx
+├── services/
+│   ├── recognitionService.ts
+│   └── simpleRecognitionService.ts
+└── types/
+    └── drawing.ts
 ```
 
 ## 💻 Getting Started
