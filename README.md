@@ -1,152 +1,206 @@
-# Romaji Challenge
+# Romaji Challenge - Learn Japanese Characters
 
-[![Vercel Deployment](https://vercel.com/button)](https://romanjichallenge.vercel.app/)
+A modern, elegant web application for learning Japanese Hiragana and Katakana characters through interactive challenges.
 
-An elegant web application designed to help users master Japanese characters through interactive challenges and intuitive drawing recognition.
+## Features
 
-## ✨ Features
+- **Character Recognition**: Test your knowledge by typing the romaji for displayed characters
+- **Hand Drawing Practice**: Draw characters and get instant feedback with advanced stroke recognition
+- **Translation Challenge**: Translate Japanese words to English to expand your vocabulary
+- **Multiple Character Sets**: Practice both Hiragana and Katakana
+- **Elegant UI**: Clean, modern interface with beautiful animations and glass-morphism design
+- **Progress Tracking**: Monitor your learning journey with detailed score tracking
+- **Mobile Optimized**: Responsive design that works perfectly on all devices
+- **PWA Support**: Install as a mobile app for offline access
+- **Dark/Light Mode**: Switch between themes for comfortable learning
 
-### Core Features
-- 🎮 Interactive character recognition game
-- ✍️ Intuitive drawing interface with real-time feedback
-- 🎯 Pattern-based stroke recognition system
-- 🔄 Seamless switching between Hiragana and Katakana
-- 📊 Dynamic scoreboard for progress tracking
-- 💫 Beautiful animations and visual feedback
-- 🌓 Light/Dark mode support
+## Mobile App
 
-### Technical Features
-- 📱 Responsive design (mobile-friendly)
-- ⚡ Optimized performance with Vite
-- 🎨 Modern UI with Tailwind CSS
-- 🔔 Elegant notifications with Sonner
-- 🎭 Smooth animations with Framer Motion
+This application can be installed as a native mobile app on both Android and iOS devices.
 
-## 🎯 How It Works
+### Installation Options
 
-### Character Recognition
-The app uses a sophisticated pattern-based recognition system that:
-1. Tracks each stroke's direction and position
-2. Analyzes stroke patterns in real-time
-3. Provides instant visual feedback
-4. Matches patterns against known character forms
+#### 1. PWA (Progressive Web App) - Easiest Method
+1. Visit the website on your mobile browser
+2. On iOS: Tap the Share button → "Add to Home Screen"
+3. On Android: Tap the menu (⋮) → "Add to Home Screen" or "Install App"
 
-### Drawing Interface
-- Smooth, responsive drawing surface
-- Real-time stroke analysis
-- Visual feedback for each stroke
-- Clear and intuitive controls
+#### 2. Native Mobile App Development
 
-## 🛠️ Tech Stack
-- **Framework:** React (TypeScript)
-- **Build Tool:** Vite
-- **Styling:** Tailwind CSS
-- **Animations:** Framer Motion
-- **State Management:** React Query
-- **Notifications:** Sonner
-- **Hosting:** Vercel
+For developers who want to build native mobile apps:
 
-## 📂 Project Structure
-```
-src/
-├── App.css
-├── App.tsx
-├── index.css
-├── main.tsx
-├── vite-env.d.ts
-├── components/
-│   ├── DrawingCanvas.tsx
-│   ├── GameCard.tsx
-│   ├── Handbook.tsx
-│   ├── NetworkVisualization.tsx
-│   ├── SakuraPetals.tsx
-│   ├── ScoreBoard.tsx
-│   ├── StrokeAnimation.tsx
-│   └── ui/                
-├── data/
-│   └── characters.ts
-├── hooks/
-│   ├── use-mobile.tsx
-│   └── use-toast.ts
-├── lib/
-│   └── utils.ts
-├── pages/
-│   ├── Index.tsx
-│   └── NotFound.tsx
-├── services/
-│   ├── recognitionService.ts
-│   └── simpleRecognitionService.ts
-└── types/
-    └── drawing.ts
+```bash
+# Install dependencies
+npm install
+
+# Build the web app
+npm run build
+
+# Add mobile platforms (if not already added)
+npm run mobile:add:android
+npm run mobile:add:ios
+
+# Sync web assets to mobile projects
+npm run mobile:sync
+
+# Open in Android Studio
+npm run mobile:open:android
+
+# Open in Xcode (macOS only)
+npm run mobile:open:ios
+
+# Run on Android device/emulator
+npm run mobile:dev
+
+# Run on iOS device/simulator (macOS only)
+npm run mobile:dev:ios
 ```
 
-## 💻 Getting Started
+#### Prerequisites for Native Development
+- **Android**: Android Studio, Java 17+, Android SDK
+- **iOS**: Xcode (macOS only), iOS 13+
 
-### Prerequisites
-- [Node.js](https://nodejs.org/) (v14 or newer)
-- [Git](https://git-scm.com/)
+#### Mobile App Features
+- Native performance with web technologies
+- Offline capability
+- Touch-optimized drawing recognition
+- Platform-specific UI adaptations
+- Native splash screen and icons
 
-### Installation
+## Technology Stack
 
-1. Clone the repository:
-```sh
+- **Frontend**: React 18, TypeScript, Vite
+- **Styling**: Tailwind CSS, Framer Motion
+- **Mobile**: Capacitor (for native apps)
+- **UI Components**: Radix UI, shadcn/ui
+- **Character Recognition**: TensorFlow.js
+- **Drawing**: Custom stroke analysis and pattern matching
+
+## Getting Started
+
+### Development
+
+```bash
+# Clone the repository
 git clone https://github.com/KrishGaur1354/romaji-challenge.git
 cd romaji-challenge
-```
 
-2. Install dependencies:
-```sh
+# Install dependencies
 npm install
-# or
-yarn install
-# or
-pnpm install
-```
 
-3. Start the development server:
-```sh
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
+
+# Build for production
+npm run build
 ```
 
-The app will be available at `http://localhost:5173/`
+### Mobile Development
 
-## 🚀 Deployment
+```bash
+# Build and sync for mobile development
+npm run mobile:build
 
-The app is deployed on Vercel. To deploy your own instance:
+# Open Android project in Android Studio
+npm run mobile:open:android
 
-1. Fork this repository
-2. Import to Vercel
-3. Deploy!
+# Open iOS project in Xcode
+npm run mobile:open:ios
+```
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FKrishGaur1354%2Fromaji-challenge)
+## Project Structure
 
-## 🤝 Contributing
+```
+romaji-challenge/
+├── src/
+│   ├── components/          # React components
+│   │   ├── DrawingCanvas.tsx    # Canvas for character drawing
+│   │   ├── GameCard.tsx         # Main game interface
+│   │   ├── ScoreBoard.tsx       # Progress tracking
+│   │   └── ui/                  # Reusable UI components
+│   ├── data/                # Character data and mappings
+│   ├── services/            # Recognition and game logic
+│   ├── hooks/               # Custom React hooks
+│   ├── lib/                 # Utility functions
+│   └── types/               # TypeScript type definitions
+├── public/                  # Static assets and PWA files
+├── android/                 # Android native project (generated)
+├── ios/                     # iOS native project (generated)
+├── capacitor.config.ts      # Mobile app configuration
+└── manifest.json           # PWA configuration
+```
 
-Contributions are welcome! Here's how you can help:
+## Features in Detail
+
+### Character Recognition Mode
+- Display random Hiragana or Katakana characters
+- Type the correct romaji pronunciation
+- Instant feedback with scoring system
+- Progressive difficulty with achievement tracking
+
+### Hand Drawing Mode
+- Touch-optimized canvas for mobile devices
+- Advanced stroke pattern recognition
+- Real-time accuracy feedback
+- Guidance grid for proper character proportions
+- Support for various stroke orders and styles
+
+### Translation Mode
+- Japanese words with English translations
+- Vocabulary building exercises
+- Hint system for learning support
+- Focus on commonly used words and phrases
+
+### Mobile Optimizations
+- Responsive design for all screen sizes
+- Touch-friendly interface elements
+- Optimized canvas drawing for touch devices
+- Proper handling of device orientation changes
+- Safe area support for modern smartphones
+- Prevent zoom on input focus
+- Offline PWA capabilities
+
+## Performance
+
+- Lightweight bundle size with code splitting
+- Smooth 60fps animations
+- Optimized touch handling
+- Efficient canvas operations
+- Lazy loading of character recognition models
+
+## Browser Support
+
+- Modern browsers with ES2020+ support
+- iOS Safari 13+
+- Android Chrome 80+
+- Desktop Chrome, Firefox, Safari, Edge
+
+## Contributing
 
 1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit your changes: `git commit -m 'Add amazing feature'`
-4. Push to the branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
+2. Create a feature branch: `git checkout -b feature-name`
+3. Make your changes with proper mobile testing
+4. Test on both web and mobile platforms
+5. Commit your changes: `git commit -m 'Add some feature'`
+6. Push to the branch: `git push origin feature-name`
+7. Submit a pull request
 
-## 📝 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
-- Thanks to all contributors who have helped shape this project
-- Inspired by traditional Japanese calligraphy practice
-- Built with modern web technologies and love for learning
+- Japanese character data sourced from various educational resources
+- TensorFlow.js team for machine learning capabilities
+- React and Vite communities for excellent development tools
+- Capacitor team for seamless mobile app development
 
-## 🔗 Links
+## Author
 
-- [Live Demo](https://romanjichallenge.vercel.app/)
-- [GitHub Repository](https://github.com/KrishGaur1354/romaji-challenge)
-- [Report an Issue](https://github.com/KrishGaur1354/romaji-challenge/issues)
+**Krish Gaur**
+- GitHub: [@KrishGaur1354](https://github.com/KrishGaur1354)
+- Portfolio: [krishgaur.dev](https://krishgaur.dev)
+
+Crafted with dedication to make Japanese learning accessible and enjoyable for everyone.
 
