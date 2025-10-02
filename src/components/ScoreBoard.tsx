@@ -17,7 +17,7 @@ export const ScoreBoard = ({ score, total, chances }: ScoreBoardProps) => {
       transition={{ duration: 0.6, type: "spring" }}
       className="text-center mb-6 sm:mb-8 w-full"
     >
-      <div className="bg-card/50 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-accent/20 shadow-xl space-y-2 sm:space-y-3">
+      <div className="bg-card/70 backdrop-blur-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 border-2 border-accent/20 shadow-xl space-y-2 sm:space-y-3">
         {/* Score and chances display */}
         <div className="flex justify-between items-center">
           <motion.div 
@@ -60,7 +60,7 @@ export const ScoreBoard = ({ score, total, chances }: ScoreBoardProps) => {
                 damping: 15,
                 duration: 0.8 
               }}
-              className="h-full bg-gradient-to-r from-accent via-accent to-accent/80 rounded-full shadow-sm relative overflow-hidden"
+              className="h-full bg-gradient-to-r from-accent via-pink-500 to-accent rounded-full shadow-sm relative overflow-hidden"
             >
               {/* Shimmer effect */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 animate-pulse" />

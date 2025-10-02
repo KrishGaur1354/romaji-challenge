@@ -47,10 +47,10 @@ export const GameCard = ({ character, romaji, onCorrect, onIncorrect }: GameCard
       initial={{ scale: 0.9, opacity: 0, y: 20 }}
       animate={{ scale: 1, opacity: 1, y: 0 }}
       transition={{ duration: 0.5, type: "spring" }}
-      className="w-full bg-card/50 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-accent/20 shadow-xl overflow-hidden relative"
+      className="w-full bg-card/70 backdrop-blur-md rounded-2xl sm:rounded-3xl border-2 border-accent/20 shadow-xl overflow-hidden relative"
     >
       {/* Subtle animated background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-accent/5 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-pink-400/5 to-accent/10 pointer-events-none" />
       
       <div className="relative p-4 sm:p-8 text-center space-y-6 sm:space-y-8">
         <motion.div
@@ -66,7 +66,7 @@ export const GameCard = ({ character, romaji, onCorrect, onIncorrect }: GameCard
             transition={{ duration: 0.6, type: "spring" }}
             className="relative"
           >
-            <div className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-japanese font-bold text-foreground mb-4 relative leading-none">
+            <div className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-japanese font-bold bg-gradient-to-br from-foreground via-accent/70 to-foreground bg-clip-text text-transparent mb-4 relative leading-none">
               {character}
               {/* Success/error indicator */}
               {isCorrect !== null && (
@@ -110,7 +110,7 @@ export const GameCard = ({ character, romaji, onCorrect, onIncorrect }: GameCard
             type="submit"
             whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.95 }}
-            className="w-full px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-accent to-accent/80 text-accent-foreground rounded-xl sm:rounded-2xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 relative overflow-hidden"
+            className="w-full px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-accent via-pink-500 to-accent text-accent-foreground rounded-xl sm:rounded-2xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 relative overflow-hidden border-2 border-white/20"
             disabled={!input.trim() || isCorrect === true}
           >
             {/* Button shimmer effect */}

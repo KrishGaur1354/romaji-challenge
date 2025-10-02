@@ -51,13 +51,16 @@ export const Handbook = () => {
     <>
       {/* Handbook Button */}
       <motion.button
-        whileHover={{ scale: 1.05 }}
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.5, type: "spring", stiffness: 200 }}
+        whileHover={{ scale: 1.1, rotate: -5 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 p-3 bg-accent text-accent-foreground rounded-full shadow-lg hover:bg-accent/90 transition-colors z-10"
+        className="fixed bottom-4 right-4 p-3 bg-gradient-to-br from-accent via-pink-500 to-accent text-accent-foreground rounded-full shadow-lg border-2 border-white/20 backdrop-blur-sm transition-colors z-40"
         aria-label="Open Handbook"
       >
-        <Book className="w-6 h-6" />
+        <Book className="w-5 h-5" />
       </motion.button>
       
       {/* Handbook Modal */}

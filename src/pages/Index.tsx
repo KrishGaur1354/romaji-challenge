@@ -2,12 +2,19 @@ import { useState, useEffect } from "react";
 import { GameCard } from "@/components/GameCard";
 import { ScoreBoard } from "@/components/ScoreBoard";
 import DrawingCanvas from "@/components/DrawingCanvas.tsx";
-import { Handbook } from "@/components/Handbook"; // Import the Handbook component
+import { Handbook } from "@/components/Handbook";
+import { Leaderboard } from "@/components/Leaderboard";
+import PhysicsSakura from "@/components/PhysicsSakura";
+import FloatingParticles from "@/components/FloatingParticles";
+import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { Toaster, toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sun, Moon, Edit, Languages, BookOpen } from "lucide-react";
+import { Sun, Moon, Edit, Languages, BookOpen, Sparkles } from "lucide-react";
 import { useTheme } from "next-themes";
 import { hiraganaData, katakanaData } from "../data/characters";
+
+// ⚡ GOD MODE - Set to true to bypass everything for testing ⚡
+const GOD_MODE = false;
 
 // Utility function to get a rank message
 const getRankMessage = (score: number, total: number) => {
@@ -61,7 +68,7 @@ const TranslationChallenge = ({
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="text-center space-y-4 sm:space-y-6 bg-card/50 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-accent/20 shadow-xl w-full"
+      className="text-center space-y-4 sm:space-y-6 bg-card/70 backdrop-blur-md rounded-2xl sm:rounded-3xl p-4 sm:p-8 border-2 border-accent/20 shadow-xl w-full"
     >
       <div className="space-y-3 sm:space-y-4">
         <motion.div 
@@ -93,7 +100,7 @@ const TranslationChallenge = ({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={checkAnswer}
-            className="px-6 sm:px-8 py-3 bg-gradient-to-r from-accent to-accent/80 text-accent-foreground rounded-xl sm:rounded-2xl font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+            className="px-6 sm:px-8 py-3 bg-gradient-to-r from-accent via-pink-500 to-accent text-accent-foreground rounded-xl sm:rounded-2xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-white/20"
           >
             Submit
           </motion.button>
@@ -174,6 +181,12 @@ const Index = () => {
     [...dataset].sort(() => Math.random() - 0.5).slice(0, 15)
   );
   const [showTip, setShowTip] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [gameStartTime, setGameStartTime] = useState<number | null>(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [isPerfectScore, setIsPerfectScore] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [wrongAnswerCount, setWrongAnswerCount] = useState(0);
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -181,6 +194,27 @@ const Index = () => {
     }, 4000);
     return () => clearInterval(interval);
   }, []);
+
+  // Check if welcome screen was already shown
+  useEffect(() => {
+    const hasSeenWelcome = localStorage.getItem('romaji_welcome_seen');
+    if (hasSeenWelcome || GOD_MODE) {
+      setShowWelcome(false);
+    }
+  }, []);
+
+  // Timer effect
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (gameStartTime && !isGameOver) {
+      timer = setInterval(() => {
+        setElapsedTime(Math.floor((Date.now() - gameStartTime) / 1000));
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [gameStartTime, isGameOver]);
   
   useEffect(() => {
     // Filter dataset for translation mode to include only words (longer than 1 character)
@@ -194,6 +228,10 @@ const Index = () => {
     setScore(0);
     setChances(5);
     setIsGameOver(false);
+    setGameStartTime(null);
+    setElapsedTime(0);
+    setIsPerfectScore(false);
+    setWrongAnswerCount(0);
   }, [challengeMode, gameMode, dataset]);
   
   const handleGameOver = () => {
@@ -201,13 +239,14 @@ const Index = () => {
     toast.info(`Game Complete! ${rankMessage}`, {
       duration: 5000,
       style: { 
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", 
+        background: "linear-gradient(135deg, #ff87b2 0%, #ff6b9e 100%)", 
         color: "white",
         border: "none",
         borderRadius: "16px"
       },
     });
     setIsGameOver(true);
+    setShowLeaderboard(true);
   };
   
   const resetGame = () => {
@@ -215,6 +254,10 @@ const Index = () => {
     setChances(5);
     setCurrentIndex(0);
     setIsGameOver(false);
+    setGameStartTime(null);
+    setElapsedTime(0);
+    setIsPerfectScore(false);
+    setWrongAnswerCount(0);
     const filteredData = gameMode === "translation" 
       ? dataset.filter(item => item.character.length > 1 && item.tip.includes("Means"))
       : dataset;
@@ -223,21 +266,35 @@ const Index = () => {
   };
   
   const handleCorrect = () => {
-    setScore((prev) => prev + 1);
+    // Start timer on first correct answer
+    if (gameStartTime === null) {
+      setGameStartTime(Date.now());
+    }
+
+    const newScore = score + 1;
+    setScore(newScore);
     setCurrentIndex((prev) => {
       if (prev + 1 >= shuffledData.length) {
         setTimeout(() => {
-          const rankMessage = getRankMessage(score + 1, shuffledData.length);
+          const finalTime = gameStartTime ? Math.floor((Date.now() - gameStartTime) / 1000) : elapsedTime;
+          const isPerfect = newScore === shuffledData.length;
+          setIsPerfectScore(isPerfect);
+          
+          const rankMessage = getRankMessage(newScore, shuffledData.length);
           toast.success(`Congratulations! ${rankMessage}`, {
             duration: 5000,
             style: { 
-              background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)", 
+              background: "linear-gradient(135deg, #ff87b2 0%, #ff6b9e 100%)", 
               color: "white",
               border: "none",
               borderRadius: "16px"
             },
           });
-          resetGame();
+          
+          setIsGameOver(true);
+          if (isPerfect) {
+            setShowLeaderboard(true);
+          }
         }, 500);
         return prev;
       }
@@ -246,6 +303,7 @@ const Index = () => {
   };
   
   const handleIncorrect = () => {
+    setWrongAnswerCount((prev) => prev + 1);
     setChances((prev) => {
       const newChances = prev - 1;
       if (newChances === 0) {
@@ -254,52 +312,103 @@ const Index = () => {
       return newChances;
     });
   };
+
+  const handleWelcomeComplete = () => {
+    localStorage.setItem('romaji_welcome_seen', 'true');
+    setShowWelcome(false);
+  };
   
+  // Show welcome screen if user hasn't seen it
+  if (showWelcome) {
+    return <WelcomeScreen onComplete={handleWelcomeComplete} />;
+  }
+
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-background via-background/95 to-accent/5 p-3 sm:p-4 md:p-6 lg:p-8 max-w-md sm:max-w-lg mx-auto relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-32 sm:w-64 h-32 sm:h-64 bg-accent/5 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-48 sm:w-96 h-48 sm:h-96 bg-accent/3 rounded-full blur-3xl animate-pulse delay-1000" />
+    <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-background via-background to-accent/5 p-3 sm:p-4 md:p-6 lg:p-8 max-w-md sm:max-w-lg mx-auto relative overflow-hidden">
+      {/* Physics-based sakura petals */}
+      <PhysicsSakura />
+      
+      {/* Floating particles background */}
+      <FloatingParticles />
+      
+      {/* Animated background elements with Japanese pattern */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute inset-0 opacity-10 bg-japanese-pattern" />
+        <div className="absolute top-1/4 left-1/4 w-32 sm:w-64 h-32 sm:h-64 bg-gradient-to-br from-accent/20 to-pink-400/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-48 sm:w-96 h-48 sm:h-96 bg-gradient-to-br from-pink-400/10 to-accent/20 rounded-full blur-3xl animate-pulse delay-1000" />
       </div>
       
-      <div className="absolute top-3 sm:top-4 right-3 sm:right-4 z-10">
+      <div className="absolute top-3 sm:top-4 right-3 sm:right-4 z-30 flex gap-2">
+        {GOD_MODE && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="px-3 py-2 rounded-full bg-yellow-500 text-black text-xs font-bold flex items-center gap-1"
+          >
+            ⚡ GOD MODE
+          </motion.div>
+        )}
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="p-2 sm:p-3 rounded-full bg-card/80 backdrop-blur-sm hover:bg-accent/20 transition-all duration-300 shadow-lg border border-accent/20"
+          className="p-2 sm:p-3 rounded-full bg-card/90 backdrop-blur-md hover:bg-accent/20 transition-all duration-300 shadow-xl border-2 border-accent/20"
         >
           {theme === "dark" ? (
-            <Sun className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
           ) : (
-            <Moon className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Moon className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
           )}
         </motion.button>
       </div>
       
-      <div className="flex-grow flex flex-col items-center justify-center relative z-10 space-y-4 sm:space-y-6">
+      {/* Leaderboard Component */}
+      <Leaderboard 
+        currentScore={isGameOver ? score : undefined}
+        currentMode={`${challengeMode} - ${gameMode}`}
+        onClose={() => setShowLeaderboard(false)}
+        timeTaken={isGameOver ? elapsedTime : undefined}
+        isPerfectScore={isPerfectScore}
+      />
+      
+      <div className="flex-grow flex flex-col items-center justify-center relative z-20 space-y-4 sm:space-y-6">
         <div className="text-center space-y-3 sm:space-y-4" style={{ minHeight: "auto" }}>
           <AnimatePresence mode='wait'>
-            <motion.h1
+            <motion.div
               key={challengeMode + headerDisplayIndex}
               initial={{ opacity: 0, y: 30, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -30, scale: 0.9 }}
               transition={{ duration: 0.5, type: "spring" }}
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-japanese text-foreground bg-gradient-to-r from-foreground to-accent/80 bg-clip-text text-transparent leading-tight px-2"
+              className="relative"
             >
-              {getHeaderText()}
-            </motion.h1>
+              <motion.div
+                className="absolute -inset-4 bg-gradient-to-r from-accent/20 via-pink-400/20 to-accent/20 blur-2xl rounded-full"
+                animate={{
+                  scale: [1, 1.1, 1],
+                  opacity: [0.3, 0.5, 0.3],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+              <h1 className="relative text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-japanese bg-gradient-to-r from-accent via-pink-500 to-accent bg-clip-text text-transparent leading-tight px-2">
+                {getHeaderText()}
+              </h1>
+            </motion.div>
           </AnimatePresence>
-          <motion.p
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="text-base sm:text-lg md:text-xl text-muted-foreground font-light px-4"
+            className="flex items-center justify-center gap-2 text-base sm:text-lg md:text-xl text-muted-foreground font-light px-4"
           >
-            Master Japanese characters with elegance
-          </motion.p>
+            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
+            <span>Master Japanese characters with elegance</span>
+            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
+          </motion.div>
         </div>
 
         {/* Character type selection */}
@@ -315,8 +424,8 @@ const Index = () => {
             onClick={() => setChallengeMode("hiragana")}
             className={`flex-1 max-w-32 sm:max-w-none sm:flex-none px-4 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-medium transition-all duration-300 text-sm sm:text-base ${
               challengeMode === "hiragana"
-                ? "bg-gradient-to-r from-accent to-accent/80 text-accent-foreground shadow-lg shadow-accent/25"
-                : "bg-card/50 backdrop-blur-sm hover:bg-accent/10 border border-accent/20"
+                ? "bg-gradient-to-r from-accent via-pink-500 to-accent text-accent-foreground shadow-lg shadow-accent/25 border-2 border-white/20"
+                : "bg-card/70 backdrop-blur-md hover:bg-accent/10 border-2 border-accent/20"
             }`}
           >
             Hiragana
@@ -327,8 +436,8 @@ const Index = () => {
             onClick={() => setChallengeMode("katakana")}
             className={`flex-1 max-w-32 sm:max-w-none sm:flex-none px-4 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-medium transition-all duration-300 text-sm sm:text-base ${
               challengeMode === "katakana"
-                ? "bg-gradient-to-r from-accent to-accent/80 text-accent-foreground shadow-lg shadow-accent/25"
-                : "bg-card/50 backdrop-blur-sm hover:bg-accent/10 border border-accent/20"
+                ? "bg-gradient-to-r from-accent via-pink-500 to-accent text-accent-foreground shadow-lg shadow-accent/25 border-2 border-white/20"
+                : "bg-card/70 backdrop-blur-md hover:bg-accent/10 border-2 border-accent/20"
             }`}
           >
             Katakana
@@ -348,8 +457,8 @@ const Index = () => {
             onClick={() => setGameMode("recognition")}
             className={`flex-1 px-2 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-medium transition-all duration-300 flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-base ${
               gameMode === "recognition"
-                ? "bg-gradient-to-r from-accent to-accent/80 text-accent-foreground shadow-lg shadow-accent/25"
-                : "bg-card/50 backdrop-blur-sm hover:bg-accent/10 border border-accent/20"
+                ? "bg-gradient-to-r from-accent via-pink-500 to-accent text-accent-foreground shadow-lg shadow-accent/25 border-2 border-white/20"
+                : "bg-card/70 backdrop-blur-md hover:bg-accent/10 border-2 border-accent/20"
             }`}
           >
             <Languages className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -362,8 +471,8 @@ const Index = () => {
             onClick={() => setGameMode("drawing")}
             className={`flex-1 px-2 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-medium transition-all duration-300 flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-base ${
               gameMode === "drawing"
-                ? "bg-gradient-to-r from-accent to-accent/80 text-accent-foreground shadow-lg shadow-accent/25"
-                : "bg-card/50 backdrop-blur-sm hover:bg-accent/10 border border-accent/20"
+                ? "bg-gradient-to-r from-accent via-pink-500 to-accent text-accent-foreground shadow-lg shadow-accent/25 border-2 border-white/20"
+                : "bg-card/70 backdrop-blur-md hover:bg-accent/10 border-2 border-accent/20"
             }`}
           >
             <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -376,8 +485,8 @@ const Index = () => {
             onClick={() => setGameMode("translation")}
             className={`flex-1 px-2 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-medium transition-all duration-300 flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-base ${
               gameMode === "translation"
-                ? "bg-gradient-to-r from-accent to-accent/80 text-accent-foreground shadow-lg shadow-accent/25"
-                : "bg-card/50 backdrop-blur-sm hover:bg-accent/10 border border-accent/20"
+                ? "bg-gradient-to-r from-accent via-pink-500 to-accent text-accent-foreground shadow-lg shadow-accent/25 border-2 border-white/20"
+                : "bg-card/70 backdrop-blur-md hover:bg-accent/10 border-2 border-accent/20"
             }`}
           >
             <BookOpen className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -394,6 +503,24 @@ const Index = () => {
           className="w-full"
         >
           <ScoreBoard score={score} total={shuffledData.length} chances={chances} />
+          {gameStartTime && !isGameOver && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center text-sm text-muted-foreground mt-2"
+            >
+              ⏱️ Time: {Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, '0')}
+            </motion.div>
+          )}
+          {GOD_MODE && !isGameOver && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center text-xs text-yellow-600 dark:text-yellow-400 mt-2 font-mono bg-yellow-100 dark:bg-yellow-900/20 p-2 rounded"
+            >
+              ⚡ Answer: {shuffledData[currentIndex]?.romaji} | Progress: {currentIndex + 1}/{shuffledData.length}
+            </motion.div>
+          )}
         </motion.div>
         
         {!isGameOver ? (
@@ -413,9 +540,11 @@ const Index = () => {
               />
             ) : gameMode === "drawing" ? (
               // Drawing mode - draw characters based on romaji
-              <div className="text-center space-y-4 sm:space-y-6 bg-card/50 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-accent/20 shadow-xl">
+              <div className="text-center space-y-4 sm:space-y-6 bg-card/70 backdrop-blur-md rounded-2xl sm:rounded-3xl p-4 sm:p-8 border-2 border-accent/20 shadow-xl">
                 <div className="space-y-2 sm:space-y-3">
-                  <p className="text-xl sm:text-2xl font-bold">Draw: {shuffledData[currentIndex]?.romaji}</p>
+                  <p className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-accent via-pink-500 to-accent bg-clip-text text-transparent">
+                    Draw: {shuffledData[currentIndex]?.romaji}
+                  </p>
                   <p className="text-sm sm:text-base text-muted-foreground px-2">
                     Draw the {challengeMode} character for "{shuffledData[currentIndex]?.romaji}"
                   </p>
@@ -436,15 +565,18 @@ const Index = () => {
               />
             )}
             
-            <motion.button
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1 }}
-              onClick={() => setShowTip(!showTip)}
-              className="mt-4 sm:mt-6 text-sm sm:text-base text-muted-foreground hover:text-accent transition-colors text-center w-full"
-            >
-              Need a hint?
-            </motion.button>
+            {/* Show hint button only after 1-2 wrong answers */}
+            {(wrongAnswerCount >= 1 || GOD_MODE) && (
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1 }}
+                onClick={() => setShowTip(!showTip)}
+                className="mt-4 sm:mt-6 text-sm sm:text-base text-muted-foreground hover:text-accent transition-colors text-center w-full"
+              >
+                Need a hint? {GOD_MODE && "⚡"}
+              </motion.button>
+            )}
             {showTip && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -470,14 +602,28 @@ const Index = () => {
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="text-center bg-card/50 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-accent/20 shadow-xl w-full"
+            className="text-center bg-card/70 backdrop-blur-md rounded-2xl sm:rounded-3xl p-6 sm:p-8 border-2 border-accent/20 shadow-xl w-full"
           >
-            <p className="text-2xl sm:text-3xl font-bold text-foreground mb-6 sm:mb-8">Game Complete!</p>
+            <motion.div
+              animate={{
+                scale: [1, 1.1, 1],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+              }}
+            >
+              <Sparkles className="w-12 h-12 mx-auto mb-4 text-accent" />
+            </motion.div>
+            <p className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-accent via-pink-500 to-accent bg-clip-text text-transparent mb-6 sm:mb-8">
+              Game Complete!
+            </p>
+            <p className="text-lg text-muted-foreground mb-6">Your Score: {score}/{shuffledData.length}</p>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={resetGame}
-              className="px-8 sm:px-10 py-3 sm:py-4 bg-gradient-to-r from-accent to-accent/80 text-accent-foreground rounded-xl sm:rounded-2xl font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+              className="px-8 sm:px-10 py-3 sm:py-4 bg-gradient-to-r from-accent via-pink-500 to-accent text-accent-foreground rounded-xl sm:rounded-2xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 border-2 border-white/20"
             >
               Play Again
             </motion.button>
@@ -498,21 +644,27 @@ const Index = () => {
         </motion.p>
       </div>
       
-      <footer className="mt-8 sm:mt-12 text-center text-xs sm:text-sm text-muted-foreground relative z-10">
+      <footer className="mt-8 sm:mt-12 text-center text-xs sm:text-sm text-muted-foreground relative z-20">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5 }}
+          className="space-y-2"
         >
-          Crafted with dedication by{" "}
-          <a
-            href="https://github.com/KrishGaur1354"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-accent transition-colors font-medium"
-          >
-            Krish Gaur
-          </a>
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-2xl">🌸</span>
+            <span>Crafted with dedication by{" "}
+              <a
+                href="https://github.com/KrishGaur1354"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-accent transition-colors font-medium bg-gradient-to-r from-accent to-pink-500 bg-clip-text hover:text-transparent"
+              >
+                Krish Gaur
+              </a>
+            </span>
+            <span className="text-2xl">🌸</span>
+          </div>
         </motion.div>
       </footer>
       
