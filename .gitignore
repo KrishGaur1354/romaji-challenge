@@ -60,3 +60,21 @@ dist-ssr
 
 etl9g/
 processimage/
+
+# Android signing keys (CRITICAL - DO NOT COMMIT)
+*.keystore
+*.jks
+android/key.properties
+android/app/release/
+android/app/build/
+android/.gradle/
+android/local.properties
+
+# iOS certificates (CRITICAL - DO NOT COMMIT)
+*.p12
+*.mobileprovision
+*.certSigningRequest
+
+# Capacitor
+android/app/src/main/assets/public/
+ios/App/App/public/

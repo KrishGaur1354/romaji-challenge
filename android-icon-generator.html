@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Romaji Challenge - Icon Generator</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #ff87b2;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        canvas {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: linear-gradient(135deg, #ff87b2 0%, #ff6b9e 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 10px 5px;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        .icon-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .preview-item {
+            text-align: center;
+        }
+        .preview-item canvas {
+            border-radius: 50%;
+        }
+        .size-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌸 Romaji Challenge Icon Generator</h1>
+        <p style="text-align: center; color: #666;">Generate all required Android launcher icons</p>
+        
+        <div style="text-align: center;">
+            <canvas id="mainCanvas" width="512" height="512"></canvas>
+            <br>
+            <button onclick="generateIcons()">Generate All Sizes</button>
+            <button onclick="downloadAll()">Download All Icons</button>
+        </div>
+        
+        <div class="icon-preview" id="preview"></div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+        let generatedIcons = {};
+
+        function drawIcon(ctx, size) {
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#ff87b2');
+            gradient.addColorStop(0.5, '#ff6b9e');
+            gradient.addColorStop(1, '#a855f7');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+
+            // Add sakura petal effect
+            ctx.save();
+            ctx.globalAlpha = 0.3;
+            ctx.fillStyle = 'white';
+            for (let i = 0; i < 3; i++) {
+                const x = size * (0.2 + i * 0.3);
+                const y = size * (0.3 + i * 0.2);
+                ctx.beginPath();
+                ctx.arc(x, y, size * 0.15, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+
+            // Japanese character "あ"
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${size * 0.6}px 'Arial', sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = size * 0.02;
+            ctx.shadowOffsetX = size * 0.01;
+            ctx.shadowOffsetY = size * 0.01;
+            ctx.fillText('あ', size / 2, size / 2);
+            
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+        }
+
+        // Draw initial icon
+        drawIcon(ctx, 512);
+
+        function generateIcons() {
+            const sizes = [
+                { name: 'mdpi', size: 48 },
+                { name: 'hdpi', size: 72 },
+                { name: 'xhdpi', size: 96 },
+                { name: 'xxhdpi', size: 144 },
+                { name: 'xxxhdpi', size: 192 },
+                { name: 'playstore', size: 512 }
+            ];
+
+            const preview = document.getElementById('preview');
+            preview.innerHTML = '';
+            generatedIcons = {};
+
+            sizes.forEach(({ name, size }) => {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = size;
+                tempCanvas.height = size;
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                drawIcon(tempCtx, size);
+                
+                const previewDiv = document.createElement('div');
+                previewDiv.className = 'preview-item';
+                
+                const previewCanvas = document.createElement('canvas');
+                previewCanvas.width = size;
+                previewCanvas.height = size;
+                previewCanvas.style.width = size > 96 ? '96px' : `${size}px`;
+                previewCanvas.style.height = size > 96 ? '96px' : `${size}px`;
+                const previewCtx = previewCanvas.getContext('2d');
+                previewCtx.drawImage(tempCanvas, 0, 0);
+                
+                const label = document.createElement('div');
+                label.className = 'size-label';
+                label.textContent = `${name} (${size}x${size})`;
+                
+                previewDiv.appendChild(previewCanvas);
+                previewDiv.appendChild(label);
+                preview.appendChild(previewDiv);
+                
+                generatedIcons[name] = tempCanvas.toDataURL('image/png');
+            });
+        }
+
+        function downloadAll() {
+            if (Object.keys(generatedIcons).length === 0) {
+                alert('Please generate icons first!');
+                return;
+            }
+
+            Object.entries(generatedIcons).forEach(([name, dataUrl]) => {
+                const link = document.createElement('a');
+                link.download = `ic_launcher_${name}.png`;
+                link.href = dataUrl;
+                link.click();
+            });
+
+            alert('All icons downloaded! Place them in:\n\nandroid/app/src/main/res/mipmap-[density]/ic_launcher.png\n\nwhere [density] is mdpi, hdpi, xhdpi, xxhdpi, or xxxhdpi');
+        }
+
+        // Generate on load
+        generateIcons();
+    </script>
+</body>
+</html>
+

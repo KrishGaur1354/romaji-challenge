@@ -1,26 +1,31 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.romaji.challenge',
+  appId: 'com.krishgaur.romajichallenge',
   appName: 'Romaji Challenge',
   webDir: 'dist',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    hostname: 'romaji-challenge.app',
+    iosScheme: 'ionic'
   },
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
-      backgroundColor: "#6366f1",
-      showSpinner: false,
+      backgroundColor: "#ff87b2",
+      showSpinner: true,
       androidSpinnerStyle: "large",
       iosSpinnerStyle: "small",
       spinnerColor: "#ffffff",
       splashFullScreen: true,
-      splashImmersive: true
+      splashImmersive: true,
+      androidSplashResourceName: "splash",
+      iosSplashResourceName: "splash"
     },
     StatusBar: {
-      style: "dark",
-      backgroundColor: "#6366f1"
+      style: "light",
+      backgroundColor: "#ff87b2",
+      overlaysWebView: false
     },
     Keyboard: {
       resize: "body",
@@ -29,12 +34,19 @@ const config: CapacitorConfig = {
     }
   },
   android: {
-    allowMixedContent: true,
-    backgroundColor: "#6366f1",
-    webContentsDebuggingEnabled: false
+    allowMixedContent: false,
+    backgroundColor: "#ff87b2",
+    webContentsDebuggingEnabled: false,
+    buildOptions: {
+      keystorePath: undefined,
+      keystorePassword: undefined,
+      keystoreAlias: undefined,
+      keystoreAliasPassword: undefined,
+      releaseType: 'APK'
+    }
   },
   ios: {
-    backgroundColor: "#6366f1",
+    backgroundColor: "#ff87b2",
     contentInset: "automatic",
     scrollEnabled: true,
     webContentsDebuggingEnabled: false

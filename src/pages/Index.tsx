@@ -6,12 +6,19 @@ import { Handbook } from "@/components/Handbook";
 import { Leaderboard } from "@/components/Leaderboard";
 import PhysicsSakura from "@/components/PhysicsSakura";
 import FloatingParticles from "@/components/FloatingParticles";
+import GradientOrbs from "@/components/GradientOrbs";
+import GlowingCursor from "@/components/GlowingCursor";
+import AchievementBadge from "@/components/AchievementBadge";
+import AnimatedBackground from "@/components/AnimatedBackground";
+import ShimmeringText from "@/components/ShimmeringText";
+import FloatingCard from "@/components/FloatingCard";
 import { WelcomeScreen } from "@/components/WelcomeScreen";
 import { Toaster, toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sun, Moon, Edit, Languages, BookOpen, Sparkles } from "lucide-react";
+import { Sun, Moon, Edit, Languages, BookOpen, Sparkles, Volume2, VolumeX } from "lucide-react";
 import { useTheme } from "next-themes";
 import { hiraganaData, katakanaData } from "../data/characters";
+import { soundEffects } from "@/utils/soundEffects";
 
 // ⚡ GOD MODE - Set to true to bypass everything for testing ⚡
 const GOD_MODE = false;
@@ -187,6 +194,10 @@ const Index = () => {
   const [isPerfectScore, setIsPerfectScore] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
   const [wrongAnswerCount, setWrongAnswerCount] = useState(0);
+  const [showAchievement, setShowAchievement] = useState(false);
+  const [achievementType, setAchievementType] = useState<"perfect" | "speed" | "streak" | "milestone" | "master" | "firstWin">("perfect");
+  const [correctStreak, setCorrectStreak] = useState(0);
+  const [soundEnabled, setSoundEnabled] = useState(soundEffects.isEnabled());
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -266,6 +277,9 @@ const Index = () => {
   };
   
   const handleCorrect = () => {
+    // Play correct sound
+    soundEffects.playCorrect();
+    
     // Start timer on first correct answer
     if (gameStartTime === null) {
       setGameStartTime(Date.now());
@@ -273,6 +287,39 @@ const Index = () => {
 
     const newScore = score + 1;
     setScore(newScore);
+    
+    // Track correct streak for achievements
+    const newStreak = correctStreak + 1;
+    setCorrectStreak(newStreak);
+    
+    // Show achievement for first win
+    if (newScore === 1 && !localStorage.getItem('firstWinShown')) {
+      setTimeout(() => {
+        soundEffects.playAchievement();
+        setAchievementType("firstWin");
+        setShowAchievement(true);
+        localStorage.setItem('firstWinShown', 'true');
+      }, 500);
+    }
+    
+    // Show achievement for hot streak
+    if (newStreak === 5) {
+      setTimeout(() => {
+        soundEffects.playAchievement();
+        setAchievementType("streak");
+        setShowAchievement(true);
+      }, 500);
+    }
+    
+    // Show milestone achievement
+    if (newScore === 10) {
+      setTimeout(() => {
+        soundEffects.playAchievement();
+        setAchievementType("milestone");
+        setShowAchievement(true);
+      }, 500);
+    }
+    
     setCurrentIndex((prev) => {
       if (prev + 1 >= shuffledData.length) {
         setTimeout(() => {
@@ -294,6 +341,21 @@ const Index = () => {
           setIsGameOver(true);
           if (isPerfect) {
             setShowLeaderboard(true);
+            // Show perfect achievement
+            setTimeout(() => {
+              soundEffects.playAchievement();
+              setAchievementType("perfect");
+              setShowAchievement(true);
+            }, 1000);
+          }
+          
+          // Show speed achievement if completed quickly
+          if (finalTime < 60) { // Under 1 minute
+            setTimeout(() => {
+              soundEffects.playAchievement();
+              setAchievementType("speed");
+              setShowAchievement(true);
+            }, 1500);
           }
         }, 500);
         return prev;
@@ -303,7 +365,11 @@ const Index = () => {
   };
   
   const handleIncorrect = () => {
+    // Play incorrect sound
+    soundEffects.playIncorrect();
+    
     setWrongAnswerCount((prev) => prev + 1);
+    setCorrectStreak(0); // Reset streak on incorrect answer
     setChances((prev) => {
       const newChances = prev - 1;
       if (newChances === 0) {
@@ -311,6 +377,15 @@ const Index = () => {
       }
       return newChances;
     });
+  };
+  
+  const toggleSound = () => {
+    const newState = !soundEnabled;
+    setSoundEnabled(newState);
+    soundEffects.setEnabled(newState);
+    if (newState) {
+      soundEffects.playClick();
+    }
   };
 
   const handleWelcomeComplete = () => {
@@ -325,18 +400,19 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-background via-background to-accent/5 p-3 sm:p-4 md:p-6 lg:p-8 max-w-md sm:max-w-lg mx-auto relative overflow-hidden">
-      {/* Physics-based sakura petals */}
+      {/* Enhanced visual effects with smooth layering */}
+      <AnimatedBackground />
+      <GradientOrbs />
+      <GlowingCursor />
       <PhysicsSakura />
-      
-      {/* Floating particles background */}
       <FloatingParticles />
       
-      {/* Animated background elements with Japanese pattern */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute inset-0 opacity-10 bg-japanese-pattern" />
-        <div className="absolute top-1/4 left-1/4 w-32 sm:w-64 h-32 sm:h-64 bg-gradient-to-br from-accent/20 to-pink-400/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-48 sm:w-96 h-48 sm:h-96 bg-gradient-to-br from-pink-400/10 to-accent/20 rounded-full blur-3xl animate-pulse delay-1000" />
-      </div>
+      {/* Achievement Badge */}
+      <AchievementBadge
+        type={achievementType}
+        visible={showAchievement}
+        onClose={() => setShowAchievement(false)}
+      />
       
       <div className="absolute top-3 sm:top-4 right-3 sm:right-4 z-30 flex gap-2">
         {GOD_MODE && (
@@ -348,6 +424,19 @@ const Index = () => {
             ⚡ GOD MODE
           </motion.div>
         )}
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={toggleSound}
+          className="p-2 sm:p-3 rounded-full bg-card/90 backdrop-blur-md hover:bg-accent/20 transition-all duration-300 shadow-xl border-2 border-accent/20"
+          title={soundEnabled ? "Mute sounds" : "Enable sounds"}
+        >
+          {soundEnabled ? (
+            <Volume2 className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
+          ) : (
+            <VolumeX className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+          )}
+        </motion.button>
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
@@ -385,18 +474,21 @@ const Index = () => {
               <motion.div
                 className="absolute -inset-4 bg-gradient-to-r from-accent/20 via-pink-400/20 to-accent/20 blur-2xl rounded-full"
                 animate={{
-                  scale: [1, 1.1, 1],
-                  opacity: [0.3, 0.5, 0.3],
+                  scale: [1, 1.15, 1],
+                  opacity: [0.3, 0.6, 0.3],
+                  rotate: [0, 180, 360],
                 }}
                 transition={{
-                  duration: 3,
+                  duration: 6,
                   repeat: Infinity,
                   ease: "easeInOut",
                 }}
               />
-              <h1 className="relative text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-japanese bg-gradient-to-r from-accent via-pink-500 to-accent bg-clip-text text-transparent leading-tight px-2">
-                {getHeaderText()}
-              </h1>
+              <ShimmeringText>
+                <h1 className="relative text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-japanese bg-gradient-to-r from-accent via-pink-500 to-accent bg-clip-text text-transparent leading-tight px-2">
+                  {getHeaderText()}
+                </h1>
+              </ShimmeringText>
             </motion.div>
           </AnimatePresence>
           <motion.div
@@ -411,88 +503,113 @@ const Index = () => {
           </motion.div>
         </div>
 
-        {/* Character type selection */}
+        {/* Character type selection with elegant animation */}
         <motion.div 
           className="flex justify-center gap-2 sm:gap-3 w-full px-4"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.4, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setChallengeMode("hiragana")}
-            className={`flex-1 max-w-32 sm:max-w-none sm:flex-none px-4 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-medium transition-all duration-300 text-sm sm:text-base ${
-              challengeMode === "hiragana"
-                ? "bg-gradient-to-r from-accent via-pink-500 to-accent text-accent-foreground shadow-lg shadow-accent/25 border-2 border-white/20"
-                : "bg-card/70 backdrop-blur-md hover:bg-accent/10 border-2 border-accent/20"
-            }`}
-          >
-            Hiragana
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setChallengeMode("katakana")}
-            className={`flex-1 max-w-32 sm:max-w-none sm:flex-none px-4 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-medium transition-all duration-300 text-sm sm:text-base ${
-              challengeMode === "katakana"
-                ? "bg-gradient-to-r from-accent via-pink-500 to-accent text-accent-foreground shadow-lg shadow-accent/25 border-2 border-white/20"
-                : "bg-card/70 backdrop-blur-md hover:bg-accent/10 border-2 border-accent/20"
-            }`}
-          >
-            Katakana
-          </motion.button>
+          <FloatingCard index={0} delay={0.4}>
+            <motion.button
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                setChallengeMode("hiragana");
+                soundEffects.playClick();
+              }}
+              className={`flex-1 max-w-32 sm:max-w-none sm:flex-none px-4 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-medium transition-all duration-500 text-sm sm:text-base ${
+                challengeMode === "hiragana"
+                  ? "bg-gradient-to-r from-accent via-pink-500 to-accent text-accent-foreground shadow-lg shadow-accent/25 border-2 border-white/20 animate-pulse-glow"
+                  : "bg-card/70 backdrop-blur-md hover:bg-accent/10 border-2 border-accent/20"
+              }`}
+            >
+              Hiragana
+            </motion.button>
+          </FloatingCard>
+          <FloatingCard index={1} delay={0.4}>
+            <motion.button
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                setChallengeMode("katakana");
+                soundEffects.playClick();
+              }}
+              className={`flex-1 max-w-32 sm:max-w-none sm:flex-none px-4 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-medium transition-all duration-500 text-sm sm:text-base ${
+                challengeMode === "katakana"
+                  ? "bg-gradient-to-r from-accent via-pink-500 to-accent text-accent-foreground shadow-lg shadow-accent/25 border-2 border-white/20 animate-pulse-glow"
+                  : "bg-card/70 backdrop-blur-md hover:bg-accent/10 border-2 border-accent/20"
+              }`}
+            >
+              Katakana
+            </motion.button>
+          </FloatingCard>
         </motion.div>
 
-        {/* Game mode selection */}
+        {/* Game mode selection with smooth transitions */}
         <motion.div 
           className="flex justify-center gap-1 sm:gap-3 w-full px-2 sm:px-4"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.5, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         >
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setGameMode("recognition")}
-            className={`flex-1 px-2 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-medium transition-all duration-300 flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-base ${
-              gameMode === "recognition"
-                ? "bg-gradient-to-r from-accent via-pink-500 to-accent text-accent-foreground shadow-lg shadow-accent/25 border-2 border-white/20"
-                : "bg-card/70 backdrop-blur-md hover:bg-accent/10 border-2 border-accent/20"
-            }`}
-          >
-            <Languages className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Recognition</span>
-            <span className="sm:hidden">Read</span>
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setGameMode("drawing")}
-            className={`flex-1 px-2 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-medium transition-all duration-300 flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-base ${
-              gameMode === "drawing"
-                ? "bg-gradient-to-r from-accent via-pink-500 to-accent text-accent-foreground shadow-lg shadow-accent/25 border-2 border-white/20"
-                : "bg-card/70 backdrop-blur-md hover:bg-accent/10 border-2 border-accent/20"
-            }`}
-          >
-            <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Drawing</span>
-            <span className="sm:hidden">Draw</span>
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setGameMode("translation")}
-            className={`flex-1 px-2 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-medium transition-all duration-300 flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-base ${
-              gameMode === "translation"
-                ? "bg-gradient-to-r from-accent via-pink-500 to-accent text-accent-foreground shadow-lg shadow-accent/25 border-2 border-white/20"
-                : "bg-card/70 backdrop-blur-md hover:bg-accent/10 border-2 border-accent/20"
-            }`}
-          >
-            <BookOpen className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Translation</span>
-            <span className="sm:hidden">Translate</span>
-          </motion.button>
+          <FloatingCard index={0} delay={0.5} className="flex-1">
+            <motion.button
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                setGameMode("recognition");
+                soundEffects.playClick();
+              }}
+              className={`w-full px-2 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-medium transition-all duration-500 flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-base ${
+                gameMode === "recognition"
+                  ? "bg-gradient-to-r from-accent via-pink-500 to-accent text-accent-foreground shadow-lg shadow-accent/25 border-2 border-white/20"
+                  : "bg-card/70 backdrop-blur-md hover:bg-accent/10 border-2 border-accent/20"
+              }`}
+            >
+              <Languages className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Recognition</span>
+              <span className="sm:hidden">Read</span>
+            </motion.button>
+          </FloatingCard>
+          <FloatingCard index={1} delay={0.5} className="flex-1">
+            <motion.button
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                setGameMode("drawing");
+                soundEffects.playClick();
+              }}
+              className={`w-full px-2 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-medium transition-all duration-500 flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-base ${
+                gameMode === "drawing"
+                  ? "bg-gradient-to-r from-accent via-pink-500 to-accent text-accent-foreground shadow-lg shadow-accent/25 border-2 border-white/20"
+                  : "bg-card/70 backdrop-blur-md hover:bg-accent/10 border-2 border-accent/20"
+              }`}
+            >
+              <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Drawing</span>
+              <span className="sm:hidden">Draw</span>
+            </motion.button>
+          </FloatingCard>
+          <FloatingCard index={2} delay={0.5} className="flex-1">
+            <motion.button
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                setGameMode("translation");
+                soundEffects.playClick();
+              }}
+              className={`w-full px-2 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-medium transition-all duration-500 flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-base ${
+                gameMode === "translation"
+                  ? "bg-gradient-to-r from-accent via-pink-500 to-accent text-accent-foreground shadow-lg shadow-accent/25 border-2 border-white/20"
+                  : "bg-card/70 backdrop-blur-md hover:bg-accent/10 border-2 border-accent/20"
+              }`}
+            >
+              <BookOpen className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Translation</span>
+              <span className="sm:hidden">Translate</span>
+            </motion.button>
+          </FloatingCard>
         </motion.div>
 
         <Toaster position="top-center" />
@@ -503,6 +620,7 @@ const Index = () => {
           className="w-full"
         >
           <ScoreBoard score={score} total={shuffledData.length} chances={chances} />
+          
           {gameStartTime && !isGameOver && (
             <motion.div
               initial={{ opacity: 0 }}

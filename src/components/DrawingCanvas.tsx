@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { mlRecognitionService } from '@/services/mlRecognitionService';
+import { improvedRecognitionService } from '@/services/improvedRecognition';
 import StrokeAnimation from './StrokeAnimation';
 import type { Point, Stroke } from '@/types/drawing';
 
@@ -52,6 +52,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
   const [showAnimation, setShowAnimation] = useState(false);
   const [hasStrokes, setHasStrokes] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isModelReady, setIsModelReady] = useState(false);
 
   // Detect mobile device
   useEffect(() => {
@@ -62,6 +63,12 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Check recognition engine status
+  useEffect(() => {
+    // The improved recognition service is always ready
+    setIsModelReady(improvedRecognitionService.isReady());
   }, []);
 
   // Responsive canvas size
@@ -92,7 +99,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     ctx.imageSmoothingEnabled = true;
 
     // Initialize recognition service with canvas size
-    mlRecognitionService.setCanvasSize(canvasSize, canvasSize);
+    improvedRecognitionService.setCanvasSize(canvasSize, canvasSize);
   }, [lineWidth, lineColor, canvasSize, isMobile]);
 
   // Get coordinates from touch or mouse event
@@ -173,7 +180,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
 
   const stopDrawing = (e?: React.MouseEvent | React.TouchEvent) => {
     if (isDrawing && currentStroke.length > 0) {
-      mlRecognitionService.addStroke(currentStroke);
+      improvedRecognitionService.addStroke(currentStroke);
       setCurrentStroke([]);
     }
     setIsDrawing(false);
@@ -190,13 +197,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     setShowAnimation(false);
 
     try {
-      const result = await mlRecognitionService.recognizeCharacter(expectedCharacter);
+      const result = await improvedRecognitionService.recognizeCharacter(expectedCharacter);
       setPrediction(result);
       setShowAnimation(true);
       
       // Auto advance if accuracy is high enough
       setTimeout(() => {
-        if (result.probability >= 0.6) { // Slightly lower threshold for mobile
+        if (result.probability >= 0.65) { // Threshold for acceptance
           onCorrect();
         } else {
           onIncorrect();
@@ -222,7 +229,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
     setPrediction(null);
     setShowAnimation(false);
     setHasStrokes(false);
-    mlRecognitionService.clearStrokes();
+    improvedRecognitionService.clearStrokes();
   };
 
   const getAccuracyColor = (probability: number) => {
@@ -244,6 +251,29 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4 }}
     >
+      {/* ML Model Status Indicator */}
+      <motion.div 
+        className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-medium backdrop-blur-md border ${
+          isModelReady 
+            ? 'bg-green-500/10 border-green-500/30 text-green-600 dark:text-green-400' 
+            : 'bg-yellow-500/10 border-yellow-500/30 text-yellow-600 dark:text-yellow-400'
+        }`}
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <motion.div 
+          className={`w-2 h-2 rounded-full ${
+            isModelReady ? 'bg-green-500' : 'bg-yellow-500'
+          }`}
+          animate={isModelReady ? { scale: [1, 1.2, 1] } : { opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        />
+        <span>
+          {isModelReady ? '✓ AI Model Ready' : '⟳ Loading AI Model...'}
+        </span>
+      </motion.div>
+
       <div className="relative">
         {/* Canvas container with refined styling */}
         <motion.div 
@@ -324,7 +354,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({
               Confidence: {Math.round(prediction.probability * 100)}%
             </div>
             <div className="text-xs text-muted-foreground">
-              Engine: {mlRecognitionService.getModelInfo()}
+              Engine: {improvedRecognitionService.getModelInfo()}
             </div>
           </div>
         </motion.div>
